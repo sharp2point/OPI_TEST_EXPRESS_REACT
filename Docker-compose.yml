@@ -2,10 +2,50 @@ version: "3.9"
 services:
   nice_back:
     build: ./backside
+    container_name: nice_back
     command: npm run start
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+
     environment:
       - PORT=3001
       - NODE_ENV=production
+      - MONGO_URL=mongodb:nice_db:27017/api
+    depends_on:
+      - nice_db
+    networks:
+      - nice_network
+
+  nice_front:
+    build: ./frontside
+    container_name: nice_front
+    command: serve -s build -l 3002
+    restart: unless-stopped
+    networks:
+      - nice_network
+
+  nice_db:
+    image: mongo
+    volumes:
+      - nice_mongo_volume:/data/db
+    networks:
+      - nice_network
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nice_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf.prod:/etc/nginx/conf.d/nginx.conf
+    depends_on:
+      - nice_front
+      - nice_back
+    networks:
+      - nice_network
+
+volumes:
+  nice_mongo_volume:
+
+networks:
+  nice_network:
+    driver: bridge

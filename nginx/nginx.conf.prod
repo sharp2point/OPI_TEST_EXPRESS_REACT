@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    server_name 192.168.0.188;
+
+    location / {
+        proxy_pass http://nice_front:3002;
+    }
+
+    location /nice_back {
+        proxy_pass http://nice_back:3001;
+        rewrite ^/api/(.*) /$1 break;
+    }
+}
